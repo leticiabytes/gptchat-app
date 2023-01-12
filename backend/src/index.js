@@ -3,7 +3,9 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 
 import { StreamChat } from 'stream-chat';
-import { configureStream } from './stream_setup.js';
+
+import { configureStream } from './streamSetup.js';
+import { parseGPTResponse } from './parseGPTResponse.js';
 
 dotenv.config({path: '../.env'});
 
@@ -58,13 +60,30 @@ app.post('/gpt-request', async (request, response, next) => {
 				'method': 'POST'
 			});
 			if (aiResponse.status === 200) {
-				console.log('ok');
+				const results = await aiResponse.text();
+				const aiText = parseGPTResponse(results);
+
+				const channelSegments = message.cid.split(':');
+				const channel = serverClient.channel(channelSegments[0], channelSegments[1]);
+				message.text = '';
+				channel.sendMessage({
+					text: aiText,
+					user: {
+						id: 'admin',
+						image: 'https://openai.com/content/images/2022/05/openai-avatar.png',
+						name: 'ChatGPT Bot'
+					}
+				}).catch((error) => console.error(error));
+
+				response.json({
+					status: true,
+					text: '',
+				});
 			}
 		} catch (error) {
 			console.log('Exception Occured');
 			console.error(error);
 		}
-		
 	}
 });
 
