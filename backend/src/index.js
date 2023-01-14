@@ -1,16 +1,17 @@
-
 import express from 'express';
 import * as dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 import { StreamChat } from 'stream-chat';
 
 import { configureStream } from './streamSetup.js';
 import { parseGPTResponse } from './parseGPTResponse.js';
 
-dotenv.config({path: '../.env'});
+dotenv.config();
 
 const OPENAI_AUTHORIZATION_KEY = process.env.OPENAI_AUTHORIZATION_KEY;
 const OPENAI_COOKIE = process.env.OPENAI_COOKIE;
+
 const STREAM_API_KEY = process.env.STREAM_API_KEY;
 const STREAM_API_SECRET = process.env.STREAM_API_SECRET;
 
@@ -21,20 +22,19 @@ configureStream(serverClient).then(_ => console.log('Stream configured!'));
 
 app.use(express.json());
 
-app.post('/gpt-request', async (request, response, next) => {
+app.get('/');
+app.post('/', async (request, response, next) => {
 	const message = request.body.message;
-
 	if (message.command === 'gpt') {
 		try {
 			const text = message.args;
-
-			const aiResponse = await fetch('http://chat.openai.backend-api/conversation', {
+			const aiResponse = await fetch('https://chat.openai.com/backend-api/conversation', {
 				'headers': {
 					'authority': 'chat.openai.com',
-					'accept': 'text/event-stream',
-					'authorization': OPENAI_AUTHORIZATION_KEY,
-					'content-type':'application/json',
-					'cookie':OPENAI_COOKIE,
+					'accept': ' text/event-stream',
+					'authorization': ` Bearer ${OPENAI_AUTHORIZATION_KEY}`,
+					'content-type': 'application/json',
+					'cookie': `${OPENAI_COOKIE}`,
 					'origin': 'https://chat.openai.com',
 					'referer': 'https://chat.openai.com/chat',
 					'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
@@ -45,16 +45,15 @@ app.post('/gpt-request', async (request, response, next) => {
 					'sec-fetch-site': 'same-origin',
 					'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
 					'x-openai-assistant-app-id': '',
-				}, 
-				body : JSON.stringify({
+				},
+				'body': JSON.stringify({
 					'action': 'next',
 					'messages': [{
-						'id': 'ffa75905-d80e-4c74-bbd1-7adfe6ba523e',
+						'id': '70933386-7449-4433-a22e-73b31d146419',
 						'role': 'user',
-						'content': {'content_type': 'text', 'parts': text.split(' ')},
+						'content': {'content_type': 'text', 'parts': text.split(' ')}
 					}],
-					'conversation_id': 'ab21dc8c-39d4-4589-90b6-ff5c5af364e3',
-					'parent_message_id': '577372cf-a7f5-425e-8723-5d46bb98b7b0',
+					'parent_message_id': '35178823-dd3f-4667-9dfd-2b48c877efc1',
 					'model': 'text-davinci-002-render'
 				}),
 				'method': 'POST'
@@ -71,20 +70,22 @@ app.post('/gpt-request', async (request, response, next) => {
 					user: {
 						id: 'admin',
 						image: 'https://openai.com/content/images/2022/05/openai-avatar.png',
-						name: 'ChatGPT Bot'
-					}
+						name: 'ChatGPT bot',
+					},
 				}).catch((error) => console.error(error));
-
-				response.json({
+				return response.json({
 					status: true,
 					text: '',
 				});
 			}
+			next();
 		} catch (error) {
 			console.log('Exception Occured');
 			console.error(error);
 		}
 	}
+
 });
+
 
 app.listen(3000, () => console.log('Server listening on port 3000!'));
