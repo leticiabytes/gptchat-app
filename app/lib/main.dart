@@ -15,11 +15,9 @@ Future<void> main() async {
     kDemoUserLvieira268.token,
   );
 
-  final streamChannel =
-      streamClient.channel('messaging', id: 'lvieira268', extraData: {
-    "name": "General Chat",
-    "members": ["lvieira268"]
-  });
+  final streamChannel = streamClient.channel('messaging',
+      id: 'lvieira268',
+      extraData: {"name": "General Chat", "member": "lvieira268"});
 
   await streamChannel.watch();
 
